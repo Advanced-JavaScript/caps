@@ -1,0 +1,32 @@
+{
+  "name": "caps",
+  "version": "1.0.0",
+  "description": "",
+  "main": "client.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "jest --coverage --verbose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashjan-401-advanced-javascript/caps.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ashjan-401-advanced-javascript/caps/issues"
+  },
+  "homepage": "https://github.com/ashjan-401-advanced-javascript/caps#readme",
+  "dependencies": {
+    "@code-fellows/supergoose": "^1.0.11",
+    "dotenv": "^8.2.0",
+    "faker": "^5.1.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.10.0",
+    "jest": "^26.4.2",
+    "jsdoc": "^3.6.6"
+  }
+}
