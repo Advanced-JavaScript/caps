@@ -16,4 +16,4 @@ For testing :
 
 ### UML 
 
-![](./assets/UML-16.JPG)
+![](./assets/UML-16.jpg)
