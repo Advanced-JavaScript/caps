@@ -10,10 +10,15 @@ CAPS will simulate a delivery service where vendors (such a flower shops) will s
 
 ![](./assets/output.JPG)
 
+- To work with the modules, in the terminal (3 different windows): 
+    - cd caps -> npm start
+    - cd vendor -> npm start
+    - cd driver -> npm start
+
 For testing :
 
 - npm test
 
 ### UML 
 
-![](./assets/UML-16.jpg)
+![](./assets/UML-17.jpg)
