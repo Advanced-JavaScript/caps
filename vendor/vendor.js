@@ -1,51 +1,31 @@
 'use strict';
 /**
- * @module net to use TCP
  * @module faker to get fake data
- * @param HOST to define the host
- * @param PORT to define the port
+ * @param vendor represent the channel connection
  * @param storeName to use one store name for each order
  */
-const net = require('net');
-const faker = require('faker');
 require('dotenv').config();
+const io = require('socket.io-client');
+const vendor = io.connect(`http://localhost:3000/caps`);
+const faker = require('faker');
 
-const HOST = process.env.HOST || 'localhost';
-const PORT = process.env.PORT || 3000;
-const storeName = process.env.storeName||'Mystore';
+const storeName = process.env.storeName || 'Mystore';
 
-const client = new net.Socket();
+async function orderSimulation() {
+  const order = {
+    storeName: storeName,
+    time: new Date(),
+    orderId: faker.random.uuid(),
+    customerName: faker.name.findName(),
+    address: faker.address.streetAddress(),
+  };
 
-client.connect(PORT, HOST, () => {
-  console.log('Client Successfully Connected');
-  client.on('data', async data => {
-    try{
-      const result = await JSON.parse(Buffer.from(data).toString());
-      if (result.event === 'delivered') {
-        console.log(`Thank you for delivering ${result.payload.orderId}`);
-      }
-    } catch(e){console.log('Daaah');}
-  });
+  vendor.emit('join', order.storeName);
+  vendor.emit('pickup', order);
+}
 
-  function sendOrder(payload) {
-    const event = JSON.stringify({ event : 'pickup', time: new Date(), payload: payload });
-    client.write(event);
-  }
+setInterval(() => orderSimulation(), 5000);
 
-  async function orderSimulation() {
-    const order={
-      storeName:storeName,
-      orderId:faker.random.uuid(),
-      customerName:faker.name.findName(),
-      address:faker.address.streetAddress(),
-    };
-
-    sendOrder(order);
-    setInterval(() => orderSimulation(), 5000);
-  }
-  
-  orderSimulation();
-
+vendor.on('delivered', payload => {
+  console.log(`Thank you for delivering ${payload.orderId}`);
 });
-
-client.on('error', e => console.log('Client Error ', e.message));

@@ -1,44 +1,41 @@
 'use strict';
 /**
- * @module net to use TCP
- * @param server the server to be used
+ * @module socket.io to use TCP
+ * @param caps the server to be used
  * @param PORT to define the port
  */
-const net = require('net');
-require('dotenv').config();
-const server = net.createServer();
-const PORT = process.env.PORT || 3000;
+const io = require('socket.io')(3000);
+const caps = io.of('/caps');
 
-server.listen(PORT, () => console.log(`Magic happens on ${PORT}`));
+caps.on('connection', socket => {
+  console.log(`Connected successfully to ${socket.id}`);
 
-const socketPool = [];
+  socket.on('join', room => {
+    socket.join(room);
+    console.log(` ${socket.id} joined ${room}`);
+  });
 
-server.on('connection', socket => {
-  socketPool.push(socket);
+  socket.on('pickup', async payload => {
+    log({'pickup': payload});
+    caps.emit('pickup', payload);
+  });
 
-  if(socketPool[0]){
-    socketPool[0].on('data', buffer => dealWithOrder(buffer));
-  }
-  if(socketPool[1]){
-    socketPool[1].on('data', buffer => dealWithOrder(buffer));
-  }
-  
-  socket.on('error', e => console.log(`Socket error ${e.message}`));
+  socket.on('in-transit', payload => {
+    log({'in-transit': payload});
+    caps.to(payload.storeName).emit('in-transit', payload);
+  });
+
+  socket.on('delivered', payload => {
+    log({'delivered': payload});
+    //Each vendor will have their own room so that they only get their own delivery notifications
+    caps.to(payload.storeName).emit('delivered', payload);
+
+  });
 
 });
 
-async function dealWithOrder(buffer){
-  try{
-    console.log('EVENT', await JSON.parse(buffer));
-    const payload = await JSON.parse(buffer.toString().trim());
-    if(payload.event === 'pickup' && socketPool[1]){
-      socketPool[1].write(JSON.stringify(payload));
-    }
-    if(payload.event === 'delivered' && socketPool[0]){
-      socketPool[0].write(JSON.stringify(payload));
-    }
-  } catch(e){ console.log('dah');}
+async function log (event){
+  console.log(`EVENT `,event);
 }
 
-
-server.on('error', e => console.log(`Socket error ${e.message}`));
+module.exports = log;
