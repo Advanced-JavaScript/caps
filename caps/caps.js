@@ -5,40 +5,45 @@
  * @param PORT to define the port
  */
 const net = require('net');
-require('dotenv').config();
-const server = net.createServer();
 const PORT = process.env.PORT || 3000;
+const server = net.createServer();
 
-server.listen(PORT, () => console.log(`Magic happens on ${PORT}`));
+server.listen(PORT, () => console.log(`Magic happens on on ${PORT}`));
 
-const socketPool = [];
+let socketPool = {};
 
-server.on('connection', socket => {
-  socketPool.push(socket);
+server.on('connection', (socket) => {
+  const id = `Socket-${Math.random()}`;
 
-  if(socketPool[0]){
-    socketPool[0].on('data', buffer => dealWithOrder(buffer));
-  }
-  if(socketPool[1]){
-    socketPool[1].on('data', buffer => dealWithOrder(buffer));
-  }
-  
-  socket.on('error', e => console.log(`Socket error ${e.message}`));
+  socketPool[id] = socket;
 
+  socket.on('data', buffer => dealWithOrder(buffer.toString()));
+
+  socket.on('error', (error) => {
+    console.log('SOCKET ERROR', error);
+  });
+  socket.on('end', (e) => {
+    delete socketPool[id];
+  });
 });
 
-async function dealWithOrder(buffer){
-  try{
-    console.log('EVENT', await JSON.parse(buffer));
-    const payload = await JSON.parse(buffer.toString().trim());
-    if(payload.event === 'pickup' && socketPool[1]){
-      socketPool[1].write(JSON.stringify(payload));
-    }
-    if(payload.event === 'delivered' && socketPool[0]){
-      socketPool[0].write(JSON.stringify(payload));
-    }
-  } catch(e){ console.log('dah');}
+server.on('error', (error) => {
+  console.log('SERVER ERROR', error.message);
+});
+
+function dealWithOrder(jsonPayload){
+  const message = JSON.parse(jsonPayload);
+  const event = message.event;
+  const time = new Date();
+  const payload = message.payload;
+
+  console.log('EVENT', {event: event, time, payload});
+  broadcast(jsonPayload);
+
 }
 
-
-server.on('error', e => console.log(`Socket error ${e.message}`));
+function broadcast(jsonPayload){
+  for(let socket in socketPool){
+    socketPool[socket].write(jsonPayload);
+  }
+}
