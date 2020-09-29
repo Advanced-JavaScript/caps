@@ -6,15 +6,19 @@ require('../caps');
 require('../driver');
 require('../vendor');
 
+
+jest.useFakeTimers();
+beforeEach(jest.clearAllTimers);
+
+
 describe('caps', () => {
-  let consoleSpy=jest.fn();
-  //   consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-  //   const time = '2020-09-27T13:14:26.995Z';
+  let consoleSpy = jest.fn();
+
   const payload = {
-    storeName:'myStore',
-    orderId:faker.random.uuid(),
-    customerName:faker.name.findName(),
-    address:faker.address.streetAddress(),
+    storeName: 'myStore',
+    orderId: faker.random.uuid(),
+    customerName: faker.name.findName(),
+    address: faker.address.streetAddress(),
   };
   beforeEach(() => {
     consoleSpy = jest.spyOn(console, 'log').mockImplementation();
@@ -22,7 +26,7 @@ describe('caps', () => {
   afterEach(() => {
     consoleSpy.mockRestore();
   });
-  
+
   it('logs the pickup event', async () => {
     await events.emit('pickup', payload);
     expect(consoleSpy).toHaveBeenCalled();
@@ -39,5 +43,33 @@ describe('caps', () => {
     // expect(consoleSpy).toHaveBeenCalledWith('EVENT ',{event:'delivered',time ,payload});
   });
 
-  
+  it('should emit in-transit event at the right time', () => {
+    console.log = jest.fn();
+    const inTransitHandler = jest.fn();
+    events.on('in-transit', inTransitHandler);
+    events.emit('pickup', payload);
+    expect(inTransitHandler).toHaveBeenCalledTimes(0);
+    jest.advanceTimersByTime(1000);
+    expect(inTransitHandler).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenCalled();
+
+  });
+
+  it('should emit delivered event at the right time', () => {
+    console.log = jest.fn();
+    const deliveredHandler = jest.fn();
+    events.on('in-transit', deliveredHandler);
+    events.emit('pickup', payload);
+    expect(deliveredHandler).toHaveBeenCalledTimes(0);
+    jest.advanceTimersByTime(3000);
+    expect(deliveredHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('should thank delivery politely hahaha', () => {
+    console.log = jest.fn();
+    events.emit('delivered', payload);
+    expect(console.log).toHaveBeenCalled();
+  });
+
+
 });

@@ -29,3 +29,5 @@ setInterval(() => orderSimulation(), 5000);
 vendor.on('delivered', payload => {
   console.log(`Thank you for delivering ${payload.orderId}`);
 });
+
+module.exports = orderSimulation;
